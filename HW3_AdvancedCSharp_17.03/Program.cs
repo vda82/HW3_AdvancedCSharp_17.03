@@ -11,29 +11,19 @@ namespace HW3_AdvancedCSharp_17._03
     {
         static void Main(string[] args)
         {
-            List<string> allDirsFilesList = new List<string>();
+
             string path = @"C:\Users\Vitaliy_Dryha\Desktop\C# Anton";
             FileSystemVisitor fileSystemVisitor = new FileSystemVisitor("txt");
 
+            SearchStart searchStart = new SearchStart();
+            SearchFinish searchFinish = new SearchFinish();
 
+            fileSystemVisitor.SearchStarted += searchStart.OnSearchStarted;
+            fileSystemVisitor.SearchFinished += searchFinish.OnSearchFinished;
 
-            Start start = new Start();
-            fileSystemVisitor.SearchStarted += start.OnSearchStarted;
-
-
-
-            foreach (var dirOrFile in fileSystemVisitor.GetAllDirectoriesAndFiles(path))
+            foreach (var dirOrFile in fileSystemVisitor.GetAllDirectoriesAndFiles(path).Where(dir=>dir.Contains(fileSystemVisitor.Filter)))
             {
-                allDirsFilesList.Add(dirOrFile);
-            }
-
-            IEnumerable<string> query = from file in allDirsFilesList
-                                        where file.Contains(fileSystemVisitor.Filter)
-                                        select file;
-
-            foreach (var item in query)
-            {
-                Console.WriteLine(item);
+                Console.WriteLine(dirOrFile);
             }
         }
     }
@@ -51,6 +41,9 @@ namespace HW3_AdvancedCSharp_17._03
 
         public event SearchStartedEventHandler SearchStarted;
 
+        public delegate void SearchFinishedEventHandler(object source, EventArgs args);
+
+        public event SearchStartedEventHandler SearchFinished;
 
         public IEnumerable<string> GetAllDirectoriesAndFiles(string path)
         {
@@ -67,7 +60,7 @@ namespace HW3_AdvancedCSharp_17._03
             {
                 yield return dir;
             }
-            OnSearchStarted();          
+            OnSearchFinished();          
         }
 
         protected virtual void OnSearchStarted()
@@ -78,13 +71,33 @@ namespace HW3_AdvancedCSharp_17._03
             }
         }
 
+        protected virtual void OnSearchFinished()
+        {
+            if (SearchFinished != null)
+            {
+                SearchFinished(this, EventArgs.Empty);
+            }
+        }
+
     }
 
-    public class Start
+    public class SearchStart
     {
         public void OnSearchStarted(object source, EventArgs args)
         {
-            Console.WriteLine("Search Started");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("-----Search Started-----");
+            Console.ResetColor();
+        }
+    }
+
+    public class SearchFinish
+    {
+        public void OnSearchFinished(object source, EventArgs args)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("-----Search Finished-----", Console.ForegroundColor);
+            Console.ResetColor();
         }
     }
 }
